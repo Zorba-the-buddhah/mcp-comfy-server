@@ -99,15 +99,55 @@ For comprehensive inspector usage, see [INSPECTOR_GUIDE.md](./INSPECTOR_GUIDE.md
 
 ## Deployment
 
+### Local ComfyUI Instance
+
 1. **Set production secrets:**
    ```bash
    wrangler secret put COMFYUI_URL
+   # Enter: http://your-local-ip:8188
    ```
 
 2. **Deploy to Cloudflare:**
    ```bash
    npm run deploy
    ```
+
+### Cloud ComfyUI Instance (Google Cloud/AWS/etc.)
+
+When using a cloud-hosted ComfyUI instance, you need to configure network access for Cloudflare Workers:
+
+#### 1. Static IP Configuration
+Your ComfyUI instance needs a static external IP:
+
+```bash
+# Google Cloud example
+gcloud compute addresses create comfyui-static-ip --region=your-region
+gcloud compute addresses describe comfyui-static-ip --region=your-region
+gcloud compute instances delete-access-config your-instance --zone=your-zone
+gcloud compute instances add-access-config your-instance --zone=your-zone --address=[STATIC_IP]
+```
+
+#### 2. Firewall Rules for Cloudflare Access
+Create a firewall rule allowing Cloudflare's IP ranges to access ComfyUI:
+
+```bash
+# Google Cloud example
+gcloud compute firewall-rules create allow-cloudflare-comfyui \
+  --allow tcp:8188 \
+  --source-ranges="173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22" \
+  --target-tags=comfyui-server \
+  --description="Allow Cloudflare Workers to access ComfyUI"
+
+gcloud compute instances add-tags your-instance --zone=your-zone --tags=comfyui-server
+```
+
+#### 3. Update Production Configuration
+```bash
+wrangler secret put COMFYUI_URL
+# Enter: http://[STATIC_IP]:8188
+```
+
+> **Important:** Cloud notebook services (like Google Colab, Jupyter notebooks with proxy URLs) require authentication and cannot be accessed directly by Cloudflare Workers. You need a dedicated compute instance with proper network configuration.
 
 ## Available Tools
 
