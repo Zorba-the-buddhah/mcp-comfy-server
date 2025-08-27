@@ -55,9 +55,6 @@ export class McpDurableObject extends McpAgent<Env> {
 					const workflowToSubmit = { ...workflow };
 					if (prompt && workflowToSubmit["45"]?.inputs) {
 						(workflowToSubmit["45"].inputs as any).text = prompt;
-					} else if (prompt && workflowToSubmit["6"]?.inputs) {
-						// Also update the positive prompt in the CLIP text encoder
-						(workflowToSubmit["6"].inputs as any).text = prompt;
 					}
 
 					// Submit to ComfyUI
