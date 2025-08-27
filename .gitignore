@@ -28,3 +28,6 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+
+# Private documentation with sensitive info
+QUICK_START_PRIVATE.md
