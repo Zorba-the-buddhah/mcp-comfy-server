@@ -1,0 +1,32 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "mcp-comfy-server",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_compat"],
+
+	// Durable Object configuration
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "MCP_OBJECT",
+				"class_name": "McpDurableObject"
+			}
+		]
+	},
+
+	// Migration for Durable Object storage
+	"migrations": [
+		{
+			"new_sqlite_classes": ["McpDurableObject"],
+			"tag": "v1"
+		}
+	],
+
+	// Environment variables (use wrangler secret put for production)
+	// COMFYUI_URL will be set via .dev.vars for local development
+
+	"observability": {
+		"enabled": true
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"name": "mcp-comfy-server",
+	"version": "1.0.0",
+	"private": true,
+	"description": "MCP server for ComfyUI with stateful job management",
+	"scripts": {
+		    "dev": "wrangler dev --port 8787",
+		"deploy": "wrangler deploy",
+		"format": "biome format --write .",
+		    "inspect": "npx @modelcontextprotocol/inspector http://localhost:8787/mcp",
+    "inspect:cli": "npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp --method tools/list"
+	},
+	"dependencies": {
+		"@cloudflare/workers-types": "^4.20241205.0",
+		"@modelcontextprotocol/sdk": "^1.17.4",
+		"agents": "^0.0.113",
+		"zod": "^3.24.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"typescript": "^5.7.2",
+		"wrangler": "^4.33.0"
+	}
+}
