@@ -114,40 +114,77 @@ For comprehensive inspector usage, see [INSPECTOR_GUIDE.md](./INSPECTOR_GUIDE.md
 
 ### Cloud ComfyUI Instance (Google Cloud/AWS/etc.)
 
-When using a cloud-hosted ComfyUI instance, you need to configure network access for Cloudflare Workers:
+**CRITICAL:** Cloudflare Workers require HTTPS for external requests. ComfyUI runs on HTTP by default, so you need HTTPS termination.
 
-#### 1. Static IP Configuration
-Your ComfyUI instance needs a static external IP:
+#### Option 1: Cloudflare Tunnel (Recommended - Free & Easy)
 
+**Quick Setup:**
+```bash
+# On your cloud instance
+curl -L https://github.com/cloudflare/cloudflare/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
+sudo dpkg -i cloudflared.deb
+
+# Login and create tunnel
+cloudflared tunnel login
+cloudflared tunnel create comfyui
+
+# Start tunnel (creates HTTPS endpoint automatically)
+cloudflared tunnel --url http://localhost:8188
+```
+
+This gives you a free HTTPS URL like: `https://random-words-123.trycloudflare.com`
+
+**Start ComfyUI:**
+```bash
+python main.py --listen 0.0.0.0 --port 8188
+```
+
+**Update secret:**
+```bash
+wrangler secret put COMFYUI_URL
+# Enter: https://your-tunnel-url.trycloudflare.com
+```
+
+#### Option 2: Custom Domain + Reverse Proxy (Permanent Solution)
+
+If you have a domain name, use Caddy for automatic HTTPS:
+
+```bash
+# Install Caddy
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update && sudo apt install caddy
+
+# Configure Caddyfile
+echo "comfyui.yourdomain.com {
+    reverse_proxy localhost:8188
+}" | sudo tee /etc/caddy/Caddyfile
+
+sudo systemctl reload caddy
+```
+
+#### Option 3: Manual HTTPS Setup (Advanced)
+
+If you prefer manual configuration:
+
+1. **Static IP + Firewall:**
 ```bash
 # Google Cloud example
 gcloud compute addresses create comfyui-static-ip --region=your-region
-gcloud compute addresses describe comfyui-static-ip --region=your-region
-gcloud compute instances delete-access-config your-instance --zone=your-zone
-gcloud compute instances add-access-config your-instance --zone=your-zone --address=[STATIC_IP]
+gcloud compute firewall-rules create allow-https-comfyui \
+  --allow tcp:443,tcp:80 \
+  --source-ranges="0.0.0.0/0" \
+  --target-tags=comfyui-server
 ```
 
-#### 2. Firewall Rules for Cloudflare Access
-Create a firewall rule allowing Cloudflare's IP ranges to access ComfyUI:
-
+2. **Nginx + Let's Encrypt:**
 ```bash
-# Google Cloud example
-gcloud compute firewall-rules create allow-cloudflare-comfyui \
-  --allow tcp:8188 \
-  --source-ranges="173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22" \
-  --target-tags=comfyui-server \
-  --description="Allow Cloudflare Workers to access ComfyUI"
-
-gcloud compute instances add-tags your-instance --zone=your-zone --tags=comfyui-server
+sudo apt install nginx certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
 ```
 
-#### 3. Update Production Configuration
-```bash
-wrangler secret put COMFYUI_URL
-# Enter: http://[STATIC_IP]:8188
-```
-
-> **Important:** Cloud notebook services (like Google Colab, Jupyter notebooks with proxy URLs) require authentication and cannot be accessed directly by Cloudflare Workers. You need a dedicated compute instance with proper network configuration.
+> **Why HTTPS is Required:** Cloudflare Workers enforce security policies that block plain HTTP requests to external services. The 403 Forbidden errors you see are due to this HTTP restriction.
 
 ## Available Tools
 
