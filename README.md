@@ -1,4 +1,4 @@
-# ComfyUI MCP Server
+d# ComfyUI MCP Server
 
 A stateful Model Context Protocol (MCP) server for ComfyUI, built with Cloudflare Workers and Durable Objects.
 
@@ -115,6 +115,21 @@ For comprehensive inspector usage, see [INSPECTOR_GUIDE.md](./INSPECTOR_GUIDE.md
 ### Cloud ComfyUI Instance (Google Cloud/AWS/etc.)
 
 **CRITICAL:** Cloudflare Workers require HTTPS for external requests. ComfyUI runs on HTTP by default, so you need HTTPS termination.
+
+**Network Requirements:**
+- **Static IP address** (required for reliable connectivity)
+- **HTTPS endpoint** (Cloudflare Workers cannot make HTTP requests)
+- **No authentication barriers** for HTTP requests
+
+**What Works:**
+- ✅ Dedicated compute instances (Google Workbench, AWS EC2, etc.) with static IPs
+- ✅ VMs with proper network configuration
+- ✅ Self-hosted servers with public IPs
+
+**What Doesn't Work:**
+- ❌ Dynamic IP services (Google Colab, temporary notebooks)
+- ❌ Services requiring authentication tokens for basic HTTP access
+- ❌ Cloud notebook services with proxy URLs and network restrictions
 
 #### Option 1: Cloudflare Tunnel (Recommended - Free & Easy)
 

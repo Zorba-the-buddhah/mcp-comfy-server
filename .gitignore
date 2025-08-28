@@ -29,6 +29,5 @@ yarn-error.log*
 *.swo
 *~
 
-# Private files with sensitive info
+# Private documentation with sensitive info
 QUICK_START_PRIVATE.md
-NOTES.md
