@@ -12,11 +12,19 @@ Our development is guided by a core philosophy: **"Follow best practices and kee
 
 ---
 
-## Primary Source for Code Patterns 🌟
+## Reference Architecture & Examples 🌟
 
-**The most important guideline is this: all implementation choices, code structure, and patterns MUST be inspired by the official examples located in the `../mcp-examples` directory.**
+**The most important guideline is this: all implementation choices, code structure, and patterns MUST be inspired by the examples located in the `../mcp-examples` directory.**
 
-Before writing any code, review the relevant examples in that folder (e.g., the Durable Object implementations, the router setup, tool definitions). Your task is to apply those proven patterns to our specific ComfyUI use case.
+### Three-Tier Reference System
+
+1. **Primary Patterns** (`../mcp-examples/cloudflare-workers/`): Your proven Cloudflare Workers architecture patterns - the Router/DO pattern, state management, tool definitions. This is your PRIMARY reference for implementation.
+
+2. **Official Implementations** (`../mcp-examples/cloudflare-official/`): Official Cloudflare MCP servers (14+ different server types) for documentation, Workers bindings, observability, browser rendering, etc. Use these for understanding professional-grade MCP implementations.
+
+3. **Creative Inspiration** (`../mcp-examples/external-mcp-servers/`): Hundreds of community MCP servers built with diverse technologies (Python, TypeScript, Go, Rust) covering databases, APIs, file systems, automation, and more. Use these for brainstorming features and exploring possibilities.
+
+Before writing any code, review the relevant examples in the cloudflare-workers directory (e.g., the Durable Object implementations, the router setup, tool definitions). Your task is to apply those proven patterns to our specific ComfyUI use case.
 
 ---
 

@@ -1,0 +1,10 @@
+# Copy this file to .dev.vars and fill in your values
+# This file should NOT be committed to version control
+
+# Your ComfyUI server URL (must be a domain name, not IP address)
+# Example: COMFYUI_URL=https://your-comfyui-server.com
+COMFYUI_URL=
+
+# Optional: API key if your ComfyUI server requires authentication
+# Example: COMFYUI_API_KEY=your-secret-api-key
+COMFYUI_API_KEY=
