@@ -1,7 +1,9 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import workflow from "./workflow.json";
+import workflow from "./workflows/workflow.json";
+import { workflows, getWorkflowById, parseWorkflowUri } from "./workflows/registry";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Define interfaces for ComfyUI responses and stored data
 interface ComfyUIResponse {
@@ -40,21 +42,86 @@ export class McpDurableObject extends McpAgent<Env> {
 	});
 
 	async init() {
+		// Register workflow resource template (workflow://{id})
+		this.server.registerResource(
+			"workflow",
+			new ResourceTemplate("workflow://{id}", { list: undefined }),
+			{
+				title: "ComfyUI Workflow",
+				description: "A ComfyUI workflow JSON",
+				mimeType: "application/json",
+			},
+			async (uri) => {
+				const id = parseWorkflowUri(uri.href);
+				if (!id) {
+					return { contents: [] };
+				}
+				const entry = getWorkflowById(id);
+				if (!entry) {
+					return { contents: [] };
+				}
+				return {
+					contents: [
+						{
+							uri: uri.href,
+							mimeType: "application/json",
+							text: JSON.stringify(entry.json),
+						},
+					],
+				};
+			},
+		);
+
+		// Optional helper tool to list workflow URIs (ids are opaque to AI, but URIs are needed)
+		this.server.tool(
+			"listWorkflowUris",
+			"List available workflow URIs for resources/read",
+			{},
+			async () => ({
+				content: [
+					{
+						type: "text",
+						text: JSON.stringify(
+							workflows.map((w) => ({ uri: `workflow://${w.id}` })),
+							null,
+							2,
+						),
+					},
+				],
+			}),
+		);
+
 		// Tool: Submit a workflow to ComfyUI
 		this.server.tool(
 			"submitWorkflow",
 			"Submit a workflow to ComfyUI for processing",
 			{
+				workflowUri: z
+					.string()
+					.describe("URI of the workflow to submit, e.g., workflow://w1")
+					.optional(),
 				prompt: z.string().optional().describe("Optional prompt text to use in the workflow"),
 			},
-			async ({ prompt }) => {
+			async ({ workflowUri, prompt }) => {
 				try {
 					const url = `${this.env.COMFYUI_URL}/prompt`;
 
-					// Clone the workflow and update prompt if provided
-					const workflowToSubmit = { ...workflow };
-					if (prompt && workflowToSubmit["45"]?.inputs) {
-						(workflowToSubmit["45"].inputs as any).text = prompt;
+					// Resolve workflow JSON
+					let workflowToSubmit: Record<string, unknown>;
+					if (workflowUri) {
+						const id = parseWorkflowUri(workflowUri);
+						if (!id) throw new Error("Invalid workflowUri");
+						const entry = getWorkflowById(id);
+						if (!entry) throw new Error("Workflow not found");
+						workflowToSubmit = { ...(entry.json as Record<string, unknown>) };
+					} else {
+						// Back-compat: use default single workflow
+						workflowToSubmit = { ...workflow } as Record<string, unknown>;
+					}
+
+					// Update prompt if provided (Phase 1: fixed node path if present)
+					if (prompt && (workflowToSubmit as any)["45"]?.inputs) {
+						((workflowToSubmit as any)["45"].inputs as any).text = prompt;
 					}
 
 					// Submit to ComfyUI

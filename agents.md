@@ -16,15 +16,21 @@ Our development is guided by a core philosophy: **"Follow best practices and kee
 
 **The most important guideline is this: all implementation choices, code structure, and patterns MUST be inspired by the examples located in the `../mcp-examples` directory.**
 
+The `../mcp-examples` directory has been carefully curated and cleaned up to provide you with the best possible reference materials. It now contains only the essential examples, organized for maximum clarity and usability.
+
 ### Three-Tier Reference System
 
-1. **Primary Patterns** (`../mcp-examples/cloudflare-workers/`): Your proven Cloudflare Workers architecture patterns - the Router/DO pattern, state management, tool definitions. This is your PRIMARY reference for implementation.
+1. **Primary Patterns** (`../mcp-examples/cloudflare-workers/`): 30+ proven Cloudflare Workers architecture patterns - the Router/DO pattern, state management, tool definitions. This is your PRIMARY reference for implementation. Key examples include:
+   - `agent-task-manager/` - Task management with state persistence
+   - `mcp-server-bearer-auth/` - Authentication patterns
+   - `tool-calling/` - Tool invocation patterns
+   - `structured-output/` - Structured data handling
 
-2. **Official Implementations** (`../mcp-examples/cloudflare-official/`): Official Cloudflare MCP servers (14+ different server types) for documentation, Workers bindings, observability, browser rendering, etc. Use these for understanding professional-grade MCP implementations.
+2. **Official Implementations** (`../mcp-examples/cloudflare-official/`): 17 official Cloudflare MCP servers covering AI Gateway, browser rendering, Workers bindings, observability, and more. These demonstrate production-ready patterns with comprehensive error handling and type safety.
 
-3. **Creative Inspiration** (`../mcp-examples/external-mcp-servers/`): Hundreds of community MCP servers built with diverse technologies (Python, TypeScript, Go, Rust) covering databases, APIs, file systems, automation, and more. Use these for brainstorming features and exploring possibilities.
+3. **Creative Inspiration** (`../mcp-examples/external-mcp-servers/`): 13 carefully selected community MCP servers showcasing art/image generation (Imagen3, video editing), complex systems (full coding agents, database gateways), and diverse technologies (Python, Rust, Go). Perfect for exploring advanced features and different implementation approaches.
 
-Before writing any code, review the relevant examples in the cloudflare-workers directory (e.g., the Durable Object implementations, the router setup, tool definitions). Your task is to apply those proven patterns to our specific ComfyUI use case.
+**Quick Start Guide**: Begin with `../mcp-examples/MCP_EXAMPLES_INDEX.md` for a comprehensive overview, then review the relevant examples in the cloudflare-workers directory. Your task is to apply those proven patterns to our specific ComfyUI use case.
 
 ---
 
@@ -89,10 +95,11 @@ The goal is to refactor our proven stateless server into a robust, stateful arch
 
 ## Testing Procedures
 
+
 1. **For Remote ComfyUI:** Set up SSH tunnel first: `gcloud compute ssh INSTANCE --project PROJECT --zone ZONE -- -L 8188:localhost:8188`
 2. **Start MCP Server:** `npm run dev`
 3. **Test with Inspector:** 
    - **Web UI:** https://mcp-inspector.mcp-servers.com/ - Best for interactive debugging
-   - **CLI Mode:** `npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse` - Best for rapid development feedback loops with AI coding assistants
+   - **CLI Mode:** `npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp` - Best for rapid development feedback loops with AI coding assistants
 
 **Pro Tip:** The CLI mode is particularly useful when developing with AI coding assistants like Cursor, as it enables scriptable testing and creates efficient feedback loops for rapid iteration.

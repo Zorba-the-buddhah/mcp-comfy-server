@@ -25,11 +25,11 @@ npx @modelcontextprotocol/inspector
 
 ## Transport Types
 
-Our server uses **SSE (Server-Sent Events)** transport. The inspector supports three transport types:
+Our server uses **Streamable HTTP** transport by default. The inspector supports three transport types:
 
 1. **STDIO**: For local processes (not used by our server)
-2. **SSE**: For server-sent events (our transport type)
-3. **Streamable HTTP**: For HTTP-based transport
+2. **SSE**: Legacy server-sent events (still supported)
+3. **Streamable HTTP**: HTTP-based transport (default)
 
 ## Usage Examples
 
@@ -37,24 +37,24 @@ Our server uses **SSE (Server-Sent Events)** transport. The inspector supports t
 
 1. **Basic connection:**
    ```bash
-   npx @modelcontextprotocol/inspector http://localhost:8787/sse
+   npx @modelcontextprotocol/inspector http://localhost:8787/mcp
    ```
 
 2. **With query parameters:**
    ```
-   http://localhost:6274/?transport=sse&serverUrl=http://localhost:8787/sse
+   http://localhost:6274/?transport=streamable-http&serverUrl=http://localhost:8787/mcp
    ```
 
 ### CLI Mode
 
 1. **List available tools:**
    ```bash
-   npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse --method tools/list
+   npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp --method tools/list
    ```
 
 2. **Submit a workflow:**
    ```bash
-   npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse \
+   npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp \
      --method tools/call \
      --tool-name submitWorkflow \
      --tool-arg prompt="beautiful sunset over mountains"
@@ -62,7 +62,7 @@ Our server uses **SSE (Server-Sent Events)** transport. The inspector supports t
 
 3. **Check job status:**
    ```bash
-   npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse \
+   npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp \
      --method tools/call \
      --tool-name getJobStatus \
      --tool-arg prompt_id="YOUR_PROMPT_ID"
@@ -70,7 +70,7 @@ Our server uses **SSE (Server-Sent Events)** transport. The inspector supports t
 
 4. **Get job history:**
    ```bash
-   npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse \
+   npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp \
      --method tools/call \
      --tool-name getJobHistory \
      --tool-arg limit=10
@@ -78,7 +78,7 @@ Our server uses **SSE (Server-Sent Events)** transport. The inspector supports t
 
 5. **Health check:**
    ```bash
-   npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse \
+   npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp \
      --method tools/call \
      --tool-name healthCheck
    ```
@@ -92,12 +92,12 @@ Save server configurations for easy reuse:
 {
   "mcpServers": {
     "comfyui-local": {
-      "type": "sse",
-      "url": "http://localhost:8787/sse"
+      "type": "streamable-http",
+      "url": "http://localhost:8787/mcp"
     },
     "comfyui-prod": {
-      "type": "sse",
-      "url": "https://your-production-url.com/sse"
+      "type": "streamable-http",
+      "url": "https://your-production-url.com/mcp"
     }
   }
 }
@@ -125,7 +125,7 @@ The inspector supports various configuration options via environment variables:
 
 ### Example with environment variables:
 ```bash
-MCP_SERVER_REQUEST_TIMEOUT=30000 npx @modelcontextprotocol/inspector http://localhost:8787/sse
+MCP_SERVER_REQUEST_TIMEOUT=30000 npx @modelcontextprotocol/inspector http://localhost:8787/mcp
 ```
 
 ## Development Workflow Tips
@@ -138,12 +138,12 @@ When developing with AI coding assistants like Cursor, use the CLI mode for rapi
 cat > test-workflow.sh << 'EOF'
 #!/bin/bash
 echo "Testing submitWorkflow..."
-npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse \
+npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp \
   --method tools/call --tool-name submitWorkflow \
   --tool-arg prompt="test prompt" | jq .
 
 echo "Listing tools..."
-npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse \
+npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp \
   --method tools/list | jq .
 EOF
 
@@ -158,7 +158,7 @@ Test multiple scenarios quickly:
 # Test different prompts
 for prompt in "sunset" "mountain" "ocean"; do
   echo "Testing prompt: $prompt"
-  npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse \
+  npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp \
     --method tools/call --tool-name submitWorkflow \
     --tool-arg prompt="$prompt"
 done
@@ -173,14 +173,14 @@ Add inspector tests to your CI pipeline:
   run: |
     npm run dev &
     sleep 5
-    npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse --method tools/list
+    npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp --method tools/list
 ```
 
 ## Troubleshooting
 
 1. **Connection refused**: Ensure the MCP server is running (`npm run dev`)
 2. **Timeout errors**: Increase timeout via `MCP_SERVER_REQUEST_TIMEOUT`
-3. **Transport errors**: Verify you're using the correct transport type (SSE)
+3. **Transport errors**: Verify you're using the correct transport type (Streamable HTTP)
 4. **Tool not found**: Check tool names match exactly (case-sensitive)
 
 ## Additional Resources

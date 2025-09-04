@@ -68,20 +68,20 @@ Best for scripting, automation, and rapid development feedback loops:
 
 ```bash
 # Interactive UI mode (opens browser)
-npx @modelcontextprotocol/inspector http://localhost:8787/sse
+npx @modelcontextprotocol/inspector http://localhost:8787/mcp
 
 # CLI mode for programmatic access
-npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse --method tools/list
+npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp --method tools/list
 
 # Call a specific tool
-npx @modelcontextprotocol/inspector --cli http://localhost:8787/sse --method tools/call --tool-name submitWorkflow --tool-arg prompt="beautiful sunset"
+npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp --method tools/call --tool-name submitWorkflow --tool-arg prompt="beautiful sunset"
 ```
 
 ### Transport Types
-This server uses SSE (Server-Sent Events) transport. The inspector also supports:
+This server uses **Streamable HTTP** transport by default. The inspector also supports:
 - **STDIO**: For local processes
-- **SSE**: For server-sent events (our case)
-- **Streamable HTTP**: For HTTP-based transport
+- **SSE**: Legacy server-sent events (supported for backward compatibility)
+- **Streamable HTTP**: HTTP-based transport (default)
 
 ### Available Tools to Test
 - `submitWorkflow` - Submit a new workflow with optional prompt
