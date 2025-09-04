@@ -44,7 +44,7 @@ export class McpDurableObject extends McpAgent<Env> {
 		// Tool: Get workflows for selection - returns actual JSONs for Claude to inspect
 		this.server.tool(
 			"getWorkflowsForSelection",
-			"Get all available workflows with their JSON for selection",
+			"Get all available ComfyUI workflows with their JSON. IMPORTANT: You must call this first to analyze each workflow's nodes and capabilities before choosing which one to submit. Look for CLIPTextEncode (text input), LoadImage (image input), model types, and output nodes to determine what each workflow does.",
 			{},
 			async () => ({
 				content: [
@@ -66,7 +66,7 @@ export class McpDurableObject extends McpAgent<Env> {
 		// Tool: Submit a workflow to ComfyUI
 		this.server.tool(
 			"submitWorkflow",
-			"Submit a workflow to ComfyUI for processing",
+			"Submit a specific workflow to ComfyUI for processing. You must call getWorkflowsForSelection first to analyze and choose the appropriate workflow based on the user's request (text-to-image, image-to-image, etc.).",
 			{
 				workflowUri: z
 					.string()
