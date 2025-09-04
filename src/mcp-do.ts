@@ -3,7 +3,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import workflow from "./workflows/workflow.json";
 import { workflows, getWorkflowById, parseWorkflowUri } from "./workflows/registry";
-import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Define interfaces for ComfyUI responses and stored data
 interface ComfyUIResponse {
@@ -42,47 +41,20 @@ export class McpDurableObject extends McpAgent<Env> {
 	});
 
 	async init() {
-		// Register workflow resource template (workflow://{id})
-		this.server.registerResource(
-			"workflow",
-			new ResourceTemplate("workflow://{id}", { list: undefined }),
-			{
-				title: "ComfyUI Workflow",
-				description: "A ComfyUI workflow JSON",
-				mimeType: "application/json",
-			},
-			async (uri) => {
-				const id = parseWorkflowUri(uri.href);
-				if (!id) {
-					return { contents: [] };
-				}
-				const entry = getWorkflowById(id);
-				if (!entry) {
-					return { contents: [] };
-				}
-				return {
-					contents: [
-						{
-							uri: uri.href,
-							mimeType: "application/json",
-							text: JSON.stringify(entry.json),
-						},
-					],
-				};
-			},
-		);
-
-		// Optional helper tool to list workflow URIs (ids are opaque to AI, but URIs are needed)
+		// Tool: Get workflows for selection - returns actual JSONs for Claude to inspect
 		this.server.tool(
-			"listWorkflowUris",
-			"List available workflow URIs for resources/read",
+			"getWorkflowsForSelection",
+			"Get all available workflows with their JSON for selection",
 			{},
 			async () => ({
 				content: [
 					{
 						type: "text",
 						text: JSON.stringify(
-							workflows.map((w) => ({ uri: `workflow://${w.id}` })),
+							workflows.map((w) => ({
+								uri: `workflow://${w.id}`,
+								json: w.json,
+							})),
 							null,
 							2,
 						),
