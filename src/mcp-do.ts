@@ -30,6 +30,75 @@ interface StoredJob {
 	result?: any;
 }
 
+// Helper interface for prompt node information
+interface PromptNodeInfo {
+	id: string;
+	type: "positive" | "negative" | "unknown";
+	currentText: string;
+	title?: string;
+}
+
+/**
+ * Find and categorize CLIPTextEncode nodes in a workflow
+ * This function works with various workflow structures and will be compatible
+ * with future dynamic workflow loading from ComfyUI
+ */
+function findPromptNodes(workflow: Record<string, any>): PromptNodeInfo[] {
+	const promptNodes: PromptNodeInfo[] = [];
+
+	for (const [nodeId, node] of Object.entries(workflow)) {
+		// Check for CLIPTextEncode nodes (some workflows use class_type, others use type)
+		if (node?.class_type === "CLIPTextEncode" || node?.type === "CLIPTextEncode") {
+			// Extract title from various possible locations
+			const title = node.title || node._meta?.title || "";
+			// Extract current text from various possible locations
+			const currentText = node.widgets_values?.[0] || node.inputs?.text || "";
+
+			let type: "positive" | "negative" | "unknown" = "unknown";
+
+			// Determine type based on title
+			if (title.toLowerCase().includes("negative")) {
+				type = "negative";
+			} else if (title.toLowerCase().includes("positive") || title.toLowerCase().includes("prompt")) {
+				type = "positive";
+			} else if (currentText === "" && promptNodes.some((n) => n.type === "positive")) {
+				// If empty text and we already have a positive, assume negative
+				type = "negative";
+			} else if (promptNodes.length === 0) {
+				// First node without clear indication is usually positive
+				type = "positive";
+			}
+
+			promptNodes.push({
+				id: nodeId,
+				type,
+				currentText,
+				title,
+			});
+		}
+	}
+
+	// If no positive was identified but we have nodes, mark the first as positive
+	if (!promptNodes.some((n) => n.type === "positive") && promptNodes.length > 0) {
+		promptNodes[0].type = "positive";
+	}
+
+	return promptNodes;
+}
+
+/**
+ * Update prompt text in a workflow node
+ * Handles both inputs.text and widgets_values formats
+ */
+function updateNodePrompt(node: any, prompt: string): void {
+	if (node.inputs?.text !== undefined) {
+		node.inputs.text = prompt;
+	} else if (node.widgets_values !== undefined) {
+		// Some workflows use widgets_values array
+		node.widgets_values = [prompt];
+	}
+}
+
 /**
  * McpDurableObject handles all MCP logic and state management for ComfyUI
  * Following Phase 1 requirements: stateful foundation with job history
@@ -68,10 +137,7 @@ export class McpDurableObject extends McpAgent<Env> {
 			"submitWorkflow",
 			"Submit a specific workflow to ComfyUI for processing. You must call getWorkflowsForSelection first to analyze and choose the appropriate workflow based on the user's request (text-to-image, image-to-image, etc.).",
 			{
-				workflowUri: z
-					.string()
-					.describe("URI of the workflow to submit, e.g., workflow://w1")
-					.optional(),
+				workflowUri: z.string().describe("URI of the workflow to submit, e.g., workflow://w1").optional(),
 				prompt: z.string().optional().describe("Optional prompt text to use in the workflow"),
 			},
 			async ({ workflowUri, prompt }) => {
@@ -91,9 +157,26 @@ export class McpDurableObject extends McpAgent<Env> {
 						workflowToSubmit = { ...workflow } as Record<string, unknown>;
 					}
 
-					// Update prompt if provided (Phase 1: fixed node path if present)
-					if (prompt && (workflowToSubmit as any)["45"]?.inputs) {
-						((workflowToSubmit as any)["45"].inputs as any).text = prompt;
+					// Update prompt if provided using dynamic node detection
+					if (prompt) {
+						const promptNodes = findPromptNodes(workflowToSubmit);
+						const positiveNode = promptNodes.find((n) => n.type === "positive");
+
+						if (positiveNode) {
+							const node = (workflowToSubmit as any)[positiveNode.id];
+							if (node) {
+								updateNodePrompt(node, prompt);
+							}
+						} else if (promptNodes.length > 0) {
+							// Fallback: use first available node if no positive identified
+							const node = (workflowToSubmit as any)[promptNodes[0].id];
+							if (node) {
+								updateNodePrompt(node, prompt);
+							}
+						} else {
+							// Log warning but continue - workflow might not need text input
+							console.warn("No CLIPTextEncode nodes found in workflow");
+						}
 					}
 
 					// Submit to ComfyUI

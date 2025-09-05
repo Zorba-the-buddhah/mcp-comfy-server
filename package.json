@@ -4,11 +4,11 @@
 	"private": true,
 	"description": "MCP server for ComfyUI with stateful job management",
 	"scripts": {
-		    "dev": "wrangler dev --port 8787",
+		"dev": "wrangler dev --port 8787",
 		"deploy": "wrangler deploy",
 		"format": "biome format --write .",
-		    "inspect": "npx @modelcontextprotocol/inspector http://localhost:8787/mcp",
-    "inspect:cli": "npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp --method tools/list"
+		"inspect": "npx @modelcontextprotocol/inspector http://localhost:8787/mcp",
+		"inspect:cli": "npx @modelcontextprotocol/inspector --cli http://localhost:8787/mcp --method tools/list"
 	},
 	"dependencies": {
 		"@cloudflare/workers-types": "^4.20241205.0",
